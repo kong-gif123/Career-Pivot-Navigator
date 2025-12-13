@@ -52,7 +52,7 @@ SC group assignment
 
 If you want to run only offline safe tests:
 
-mvn -Dtest=SkillTest,SkillSetTest,UserProfileTest,SystemTest test
+mvn -Dtest=SkillTest,SkillSetTest,UserProfileTest,SystemTest test``` :contentReference[oaicite:6]{index=6}  
 
 6) View code coverage (JaCoCo)
 After running tests, open:  
