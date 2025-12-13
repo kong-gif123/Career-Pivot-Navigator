@@ -53,7 +53,6 @@ SC group assignment
 If you want to run only offline safe tests:
 
 mvn -Dtest=SkillTest,SkillSetTest,UserProfileTest,SystemTest test
-``` :contentReference[oaicite:6]{index=6}  
 
 6) View code coverage (JaCoCo)
 After running tests, open:  
@@ -62,3 +61,4 @@ After running tests, open:
 Troubleshooting (common cases)
 - No API key / no internet: system will still work with local fallback course catalog (offline mode).  
 - YouTube request failed / quota exceeded: retry later or use fallback mode.
+
