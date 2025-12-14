@@ -4,25 +4,25 @@ import edu.llapp.domain.GapReport;
 import edu.llapp.domain.SkillSet;
 
 /**
- * 技能匹配策略介面
- * 定義如何比對現有技能與目標技能
+ * Skill Matching Strategy Interface
+ * Defines how existing skills are compared with target skills
  */
 public interface ISkillMatcher {
     /**
-     * 策略名稱
+     * Strategy Name
      */
     String getName();
 
     /**
-     * 策略描述
+     * Strategy Description
      */
     String getDescription();
 
     /**
-     * 執行技能匹配，返回差距報告
-     * @param current 現有技能集
-     * @param target 目標技能集
-     * @return 差距報告
+     * Perform skills matching and return a gap report.
+     * @param current Existing skill set
+     * @param target Target Skills Set
+     * @return Gap Report
      */
     GapReport match(SkillSet current, SkillSet target);
 }

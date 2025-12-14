@@ -48,9 +48,9 @@ public class YouTubeClient {
         if (cached != null) {
             return cached;  // cache hit, return directly
         }
-        // ===== Cache check end=====
+        // ===== Cache check done=====
 
-        // The original logic：hit API with retry
+        // Constructing Enhanced Queries
         String query = skillName + " tutorial beginner";
 
         for (int attempt = 0; attempt <= maxRetries; attempt++) {
