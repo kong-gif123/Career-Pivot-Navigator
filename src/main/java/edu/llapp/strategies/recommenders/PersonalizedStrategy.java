@@ -5,8 +5,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * 個人化推薦策略
- * 優先推薦短時間、高相關度的課程
+ * Personalized recommendation strategy
+ * Prioritize recommending short, highly relevant courses
  */
 public class PersonalizedStrategy implements ICourseStrategy {
 
@@ -27,7 +27,7 @@ public class PersonalizedStrategy implements ICourseStrategy {
                 .map(Skill::getName)
                 .collect(Collectors.toSet());
 
-        // 先收集相關課程
+        // First, collect relevant courses.
         List<Course> relevantCourses = new ArrayList<>();
 
         for (Course course : availableCourses) {
@@ -41,10 +41,10 @@ public class PersonalizedStrategy implements ICourseStrategy {
             }
         }
 
-        // 按時長排序（優先推薦短課程）
+        // Sort by duration (shorter courses preferred)
         relevantCourses.sort(Comparator.comparingInt(Course::getDurationHours));
 
-        // 取前 5 門
+        // Take the first 5 doors
         for (int i = 0; i < Math.min(5, relevantCourses.size()); i++) {
             Course course = relevantCourses.get(i);
 

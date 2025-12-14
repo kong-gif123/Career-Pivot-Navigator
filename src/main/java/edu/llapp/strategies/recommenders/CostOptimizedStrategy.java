@@ -5,8 +5,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * 成本優化推薦策略
- * 優先推薦免費/低成本課程
+ * Cost Optimization Recommendation Strategy
+ * Prioritize recommending free/low-cost courses
  */
 public class CostOptimizedStrategy implements ICourseStrategy {
 
@@ -27,7 +27,7 @@ public class CostOptimizedStrategy implements ICourseStrategy {
                 .map(Skill::getName)
                 .collect(Collectors.toSet());
 
-        // 優先推薦免費平台的課程（YouTube, Khan Academy, freeCodeCamp）
+        // Free courses are highly recommended.（YouTube, Khan Academy, freeCodeCamp）
         List<String> freePlatforms = Arrays.asList("YouTube", "Khan Academy", "freeCodeCamp",
                 "GitHub Learning Lab", "AWS Training", "Microsoft Learn");
 
@@ -47,13 +47,13 @@ public class CostOptimizedStrategy implements ICourseStrategy {
             }
         }
 
-        // 先推免費的
+        // First, promote the free ones.
         for (Course course : freeCourses) {
             if (result.size() >= 5) break;
             result.addCourse(course, new Reason("FREE", "免費課程"));
         }
 
-        // 不夠再推付費的
+        // If that's not enough, we'll push paid options.
         for (Course course : paidCourses) {
             if (result.size() >= 5) break;
             result.addCourse(course, new Reason("VALUE", "高性價比"));

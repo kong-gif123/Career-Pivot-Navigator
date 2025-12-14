@@ -7,20 +7,20 @@ import edu.llapp.domain.Course;
 import java.util.List;
 
 /**
- * 課程推薦策略介面
+ * Course Recommendation Strategy Interface
  */
 public interface ICourseStrategy {
     /**
-     * 策略類型
+     * Strategy type
      */
     String getAlgorithmType();
 
     /**
-     * 執行課程推薦
-     * @param gap 技能差距報告
-     * @param profile 使用者檔案
-     * @param availableCourses 可用課程列表
-     * @return 推薦課程及原因
+     * Recommended courses
+     * @param gap Skills Gap Report
+     * @param profile User Profile
+     * @param availableCourses Available Course List
+     * @return Recommended courses and reasons
      */
     CourseListWithReasons recommend(GapReport gap, UserProfile profile, List<Course> availableCourses);
 }
