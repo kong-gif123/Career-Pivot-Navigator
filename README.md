@@ -20,7 +20,7 @@ API Key Setup (YouTube Data API v3)
    https://console.cloud.google.com/apis/credentials
    
 Required property
-```properties
+properties
 youtube.api.key=YOUR_API_KEY_HERE
 
 Other optional settings (already has defaults)
@@ -89,5 +89,6 @@ Troubleshooting (common cases)
 
 No API key / no internet: the system will still work with the local fallback course catalog (offline mode).
 YouTube request failed / quota exceeded: retry later or rely on fallback mode.
+
 
 
