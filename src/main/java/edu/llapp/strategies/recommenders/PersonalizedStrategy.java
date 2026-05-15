@@ -49,9 +49,9 @@ public class PersonalizedStrategy implements ICourseStrategy {
             Course course = relevantCourses.get(i);
 
             if (course.getDurationHours() <= 10) {
-                result.addCourse(course, new Reason("QUICK_WIN", "快速學習 (" + course.getDurationHours() + "h)"));
+                result.addCourse(course, new Reason("QUICK_WIN", "Quick win (" + course.getDurationHours() + "h)"));
             } else {
-                result.addCourse(course, new Reason("PERSONALIZED", "適合你的學習節奏"));
+                result.addCourse(course, new Reason("PERSONALIZED", "Matches your learning pace"));
             }
         }
 

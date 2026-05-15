@@ -12,12 +12,16 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.logging.Logger;
 
 /**
- * YouTube Data API v3 client
- * Search for instructional videos and convert them into course objects.
+ * YouTube Data API v3 client.
+ * Searches for instructional videos and maps them to Course objects.
+ * Includes in-memory caching and exponential backoff retry logic.
  */
 public class YouTubeClient {
+    private static final Logger logger = Logger.getLogger(YouTubeClient.class.getName());
+
     private String apiKey;
     private String baseUrl;
     private int timeoutMs;
@@ -30,50 +34,45 @@ public class YouTubeClient {
         this.timeoutMs = ConfigLoader.getApiTimeout();
         this.maxRetries = ConfigLoader.getMaxRetries();
         this.cache = new SimpleCache<>(ConfigLoader.getCacheTTL());
-
     }
 
     /**
-     * search courses
-     * @param skillName skill name（eg "Python"）
-     * @param maxResults requests can be returned at most（eg 5-10）
-     * @return course list
+     * Search for courses matching the given skill.
+     * Results are cached by skill name + maxResults.
+     *
+     * @param skillName  the skill to search for (e.g. "Python")
+     * @param maxResults maximum number of results
+     * @return list of matching courses
      */
-
     public List<Course> searchCourses(String skillName, int maxResults) {
         String cacheKey = skillName + "_" + maxResults;
 
-        // check Cache first
         List<Course> cached = cache.get(cacheKey);
         if (cached != null) {
-            return cached;  // cache hit, return directly
+            return cached;
         }
-        // ===== Cache check done=====
 
-        // Constructing Enhanced Queries
         String query = skillName + " tutorial beginner";
 
         for (int attempt = 0; attempt <= maxRetries; attempt++) {
             try {
-                List<Course> results = searchWithRetry(query, maxResults);  // ← original
+                List<Course> results = searchWithRetry(query, maxResults);
 
-                // ===== add：Deposit into Cache =====
                 if (results != null && !results.isEmpty()) {
                     cache.put(cacheKey, results);
                 }
-                // ===== caches storage complete =====
 
-                return results;  // ← original
+                return results;
 
             } catch (Exception e) {
-                System.err.println("Attempt " + (attempt + 1) + " failed: " + e.getMessage());
+                logger.warning("Attempt " + (attempt + 1) + " failed: " + e.getMessage());
 
                 if (attempt == maxRetries) {
-                    System.err.println("All retries failed for query: " + query);
+                    logger.severe("All retries exhausted for query: " + query);
                     throw new RuntimeException("YouTube API failed after " + maxRetries + " retries", e);
                 }
 
-                // exponential backoff
+                // Exponential backoff
                 try {
                     Thread.sleep((long) Math.pow(2, attempt) * 1000);
                 } catch (InterruptedException ie) {
@@ -86,14 +85,13 @@ public class YouTubeClient {
     }
 
     private List<Course> searchWithRetry(String query, int maxResults) throws Exception {
-        // Constructing URL
         String encodedQuery = URLEncoder.encode(query, StandardCharsets.UTF_8);
         String urlString = String.format(
                 "%s/search?part=snippet&q=%s&type=video&videoDuration=medium&maxResults=%d&key=%s",
                 baseUrl, encodedQuery, maxResults, apiKey
         );
 
-        System.out.println("Searching YouTube: " + query);
+        logger.info("Searching YouTube: " + query);
 
         URL url = new URL(urlString);
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -106,22 +104,18 @@ public class YouTubeClient {
         if (responseCode == 403) {
             throw new RuntimeException("API quota exceeded or key invalid");
         }
-
         if (responseCode != 200) {
-            throw new RuntimeException("HTTP error code: " + responseCode);
+            throw new RuntimeException("HTTP error: " + responseCode);
         }
 
-        // Read response
         BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
         StringBuilder response = new StringBuilder();
         String line;
-
         while ((line = in.readLine()) != null) {
             response.append(line);
         }
         in.close();
 
-        // Parsing JSON
         return parseYouTubeResponse(response.toString(), query);
     }
 
@@ -133,7 +127,7 @@ public class YouTubeClient {
             JsonArray items = root.getAsJsonArray("items");
 
             if (items == null || items.size() == 0) {
-                System.out.println("No results found for: " + originalQuery);
+                logger.info("No results found for: " + originalQuery);
                 return courses;
             }
 
@@ -147,94 +141,69 @@ public class YouTubeClient {
                 String channelTitle = snippet.get("channelTitle").getAsString();
                 String videoUrl = "https://www.youtube.com/watch?v=" + videoId;
 
-                // Estimated duration (YouTube API requires an additional request, so this is simplified to a fixed value).
+                // Duration is estimated from title keywords (full lookup requires a separate API call)
                 int estimatedHours = estimateDuration(title);
-
-                // Extracting skills from queries
                 Set<String> skills = extractSkills(originalQuery);
 
-                Course course = new Course(
+                courses.add(new Course(
                         "YT-" + videoId,
                         cleanTitle(title),
                         "YouTube - " + channelTitle,
                         videoUrl,
                         estimatedHours,
                         skills
-                );
-
-                courses.add(course);
+                ));
             }
 
-            System.out.println("Found " + courses.size() + " courses from YouTube");
+            logger.info("Found " + courses.size() + " courses from YouTube");
 
         } catch (Exception e) {
-            System.err.println("Error parsing YouTube response: " + e.getMessage());
-            e.printStackTrace();
+            logger.severe("Error parsing YouTube response: " + e.getMessage());
         }
 
         return courses;
     }
 
-    /**
-     * Clean up the title (remove unnecessary symbols)
-     */
+    /** Remove brackets and extra whitespace from video titles. */
     private String cleanTitle(String title) {
         return title.replaceAll("[\\[\\](){}|]", "")
                 .replaceAll("\\s+", " ")
                 .trim();
     }
 
-    /**
-     * Estimating duration from the title
-     */
+    /** Estimate course duration in hours based on title keywords. */
     private int estimateDuration(String title) {
         String lower = title.toLowerCase();
-
-        if (lower.contains("crash course") || lower.contains("complete")) {
-            return 15;
-        } else if (lower.contains("full") || lower.contains("tutorial")) {
-            return 12;
-        } else if (lower.contains("quick") || lower.contains("intro")) {
-            return 8;
-        }
-
-        return 10; // Preset 10 hours
+        if (lower.contains("crash course") || lower.contains("complete")) return 15;
+        if (lower.contains("full") || lower.contains("tutorial")) return 12;
+        if (lower.contains("quick") || lower.contains("intro")) return 8;
+        return 10;
     }
 
-    /**
-     * Skills for extracting query strings
-     */
+    /** Extract skill name from the search query string. */
     private Set<String> extractSkills(String query) {
         Set<String> skills = new HashSet<>();
-
-        // Remove common tutorial keywords
         String cleaned = query.toLowerCase()
                 .replaceAll("tutorial|beginner|course|complete|full", "")
                 .trim();
-
         if (!cleaned.isEmpty()) {
             skills.add(capitalize(cleaned));
         }
-
         return skills;
     }
 
     private String capitalize(String str) {
-        if (str == null || str.isEmpty()) {
-            return str;
-        }
+        if (str == null || str.isEmpty()) return str;
         return str.substring(0, 1).toUpperCase() + str.substring(1);
     }
 
-    /**
-     * Test API connection
-     */
+    /** Test API connectivity by running a minimal search. */
     public boolean testConnection() {
         try {
             List<Course> results = searchCourses("Java", 1);
             return !results.isEmpty();
         } catch (Exception e) {
-            System.err.println("API connection test failed: " + e.getMessage());
+            logger.warning("API connection test failed: " + e.getMessage());
             return false;
         }
     }

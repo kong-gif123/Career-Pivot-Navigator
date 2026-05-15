@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>StrategyRegistry.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">LifelongLearningApp</a> &gt; <a href="index.source.html" class="el_package">edu.llapp.infra</a> &gt; <span class="el_source">StrategyRegistry.java</span></div><h1>StrategyRegistry.java</h1><pre class="source lang-java linenums">package edu.llapp.infra;
+
+import edu.llapp.strategies.matchers.*;
+import edu.llapp.strategies.recommenders.*;
+import java.util.*;
+
+/**
+ * Policy Registry
+ * Manages all available policies and provides dynamic selection.
+ */
+public class StrategyRegistry {
+    private Map&lt;String, ISkillMatcher&gt; matchers;
+    private Map&lt;String, ICourseStrategy&gt; recommenders;
+
+<span class="fc" id="L15">    public StrategyRegistry() {</span>
+<span class="fc" id="L16">        this.matchers = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L17">        this.recommenders = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L18">        registerDefaultStrategies();</span>
+<span class="fc" id="L19">    }</span>
+
+    private void registerDefaultStrategies() {
+        // register Matchers
+<span class="fc" id="L23">        matchers.put(&quot;keyword&quot;, new KeywordBasedMatcher());</span>
+<span class="fc" id="L24">        matchers.put(&quot;semantic&quot;, new SemanticMatcher());</span>
+<span class="fc" id="L25">        matchers.put(&quot;hybrid&quot;, new HybridMatcher());</span>
+
+        // register Recommenders
+<span class="fc" id="L28">        recommenders.put(&quot;popularity&quot;, new PopularityBasedStrategy());</span>
+<span class="fc" id="L29">        recommenders.put(&quot;personalized&quot;, new PersonalizedStrategy());</span>
+<span class="fc" id="L30">        recommenders.put(&quot;cost&quot;, new CostOptimizedStrategy());</span>
+<span class="fc" id="L31">    }</span>
+
+    /**
+     * Retrieves the Matcher strategy based on the key
+     * @param key Strategy key (keyword, semantic, hybrid)
+     * @return The corresponding strategy; if not found, returns the default KeywordBasedMatcher.
+     */
+    public ISkillMatcher getMatcher(String key) {
+<span class="fc" id="L39">        return matchers.getOrDefault(key.toLowerCase(), new KeywordBasedMatcher());</span>
+    }
+
+    /**
+     * Retrieve Recommender strategy based on key
+     * @param key Strategy key (popularity, personalized, cost)
+     * @return The corresponding strategy; if not found, returns the default PopularityBasedStrategy
+     */
+    public ICourseStrategy getRecommender(String key) {
+<span class="fc" id="L48">        return recommenders.getOrDefault(key.toLowerCase(), new PopularityBasedStrategy());</span>
+    }
+
+    /**
+     * Get all available Matcher strategy names
+     */
+    public Set&lt;String&gt; getAvailableMatchers() {
+<span class="nc" id="L55">        return matchers.keySet();</span>
+    }
+
+    /**
+     * Get all available Recommender policy names
+     */
+    public Set&lt;String&gt; getAvailableRecommenders() {
+<span class="nc" id="L62">        return recommenders.keySet();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

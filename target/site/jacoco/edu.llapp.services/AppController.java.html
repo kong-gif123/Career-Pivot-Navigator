@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AppController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">LifelongLearningApp</a> &gt; <a href="index.source.html" class="el_package">edu.llapp.services</a> &gt; <span class="el_source">AppController.java</span></div><h1>AppController.java</h1><pre class="source lang-java linenums">package edu.llapp.services;
+
+import edu.llapp.domain.*;
+import java.util.List;
+import java.util.logging.Logger;
+
+/**
+ * Application controller that orchestrates the full career pivot workflow:
+ * Skill matching → Course recommendation → Learning path generation → Resume building
+ */
+public class AppController {
+<span class="fc" id="L12">    private static final Logger logger = Logger.getLogger(AppController.class.getName());</span>
+
+    private SkillMatcherService matcherService;
+    private CourseRecommenderService recommenderService;
+    private PathGeneratorService pathGenerator;
+    private ResumeBuilderService resumeBuilder;
+
+    public AppController(
+            SkillMatcherService matcherService,
+            CourseRecommenderService recommenderService,
+            PathGeneratorService pathGenerator,
+<span class="fc" id="L23">            ResumeBuilderService resumeBuilder) {</span>
+<span class="fc" id="L24">        this.matcherService = matcherService;</span>
+<span class="fc" id="L25">        this.recommenderService = recommenderService;</span>
+<span class="fc" id="L26">        this.pathGenerator = pathGenerator;</span>
+<span class="fc" id="L27">        this.resumeBuilder = resumeBuilder;</span>
+<span class="fc" id="L28">    }</span>
+
+    /**
+     * Run the full analysis pipeline: gap analysis → recommendations → learning path.
+     *
+     * @param profile          the user's current profile and skills
+     * @param targetSkills     the skill set required for the target role
+     * @param availableCourses courses to choose from
+     * @return a generated learning path
+     */
+    public LearningPath analyzeAndGeneratePath(
+            UserProfile profile,
+            SkillSet targetSkills,
+            List&lt;Course&gt; availableCourses) {
+
+<span class="nc" id="L43">        logger.info(&quot;Step 1: Analyzing skill gaps&quot;);</span>
+<span class="nc" id="L44">        GapReport gap = matcherService.match(profile.getSkills(), targetSkills);</span>
+<span class="nc" id="L45">        logger.info(&quot;Gap report: &quot; + gap);</span>
+
+<span class="nc" id="L47">        logger.info(&quot;Step 2: Recommending courses&quot;);</span>
+<span class="nc" id="L48">        CourseListWithReasons recommendations = recommenderService.recommend(gap, profile, availableCourses);</span>
+<span class="nc" id="L49">        logger.info(&quot;Recommended &quot; + recommendations.size() + &quot; courses&quot;);</span>
+
+<span class="nc" id="L51">        logger.info(&quot;Step 3: Generating learning path&quot;);</span>
+<span class="nc" id="L52">        LearningPath path = pathGenerator.generate(recommendations);</span>
+<span class="nc" id="L53">        logger.info(&quot;Learning path generated: &quot; + path);</span>
+
+<span class="nc" id="L55">        return path;</span>
+    }
+
+    /**
+     * Build resume bullet points based on the user's profile and completed learning path.
+     */
+    public ResumeBullets buildResume(UserProfile profile, LearningPath path) {
+<span class="nc" id="L62">        logger.info(&quot;Step 4: Building resume bullets&quot;);</span>
+<span class="nc" id="L63">        return resumeBuilder.build(profile, path);</span>
+    }
+
+    // Getters for GUI access
+<span class="fc" id="L67">    public SkillMatcherService getMatcherService() { return matcherService; }</span>
+<span class="fc" id="L68">    public CourseRecommenderService getRecommenderService() { return recommenderService; }</span>
+<span class="nc" id="L69">    public PathGeneratorService getPathGenerator() { return pathGenerator; }</span>
+<span class="fc" id="L70">    public ResumeBuilderService getResumeBuilder() { return resumeBuilder; }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

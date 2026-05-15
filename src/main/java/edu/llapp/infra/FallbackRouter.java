@@ -2,12 +2,15 @@ package edu.llapp.infra;
 
 import edu.llapp.domain.Course;
 import java.util.List;
+import java.util.logging.Logger;
 
 /**
- * Backup Router
- * Switch to local data when API fails
+ * Fallback router that serves courses from the local catalog
+ * when the external API is unavailable or disabled.
  */
 public class FallbackRouter {
+    private static final Logger logger = Logger.getLogger(FallbackRouter.class.getName());
+
     private LocalCatalogRepository localCatalog;
     private boolean fallbackEnabled;
 
@@ -17,31 +20,30 @@ public class FallbackRouter {
     }
 
     /**
-     * Get courses from the local catalog (search by skill)
+     * Retrieve courses from the local catalog matching the given skill.
      */
     public List<Course> getLocalCourses(String skillName) {
         if (!fallbackEnabled) {
-            System.out.println("Fallback is disabled");
+            logger.info("Fallback is disabled");
             return List.of();
         }
 
-        System.out.println("Falling back to local catalog for: " + skillName);
+        logger.info("Falling back to local catalog for: " + skillName);
         List<Course> courses = localCatalog.searchBySkill(skillName);
-        System.out.println("Found " + courses.size() + " courses in local catalog");
-
+        logger.info("Found " + courses.size() + " courses in local catalog");
         return courses;
     }
 
     /**
-     * Retrieve all courses from the local directory
+     * Retrieve all courses from the local catalog.
      */
     public List<Course> getAllLocalCourses() {
         if (!fallbackEnabled) {
-            System.out.println("Fallback is disabled");
+            logger.info("Fallback is disabled");
             return List.of();
         }
 
-        System.out.println("Falling back to local catalog (all courses)");
+        logger.info("Loading all courses from local catalog");
         return localCatalog.listAll();
     }
 
@@ -51,6 +53,6 @@ public class FallbackRouter {
 
     public void setFallbackEnabled(boolean enabled) {
         this.fallbackEnabled = enabled;
-        System.out.println("Fallback " + (enabled ? "enabled" : "disabled"));
+        logger.info("Fallback " + (enabled ? "enabled" : "disabled"));
     }
 }

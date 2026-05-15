@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PlanStep.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">LifelongLearningApp</a> &gt; <a href="index.source.html" class="el_package">edu.llapp.domain</a> &gt; <span class="el_source">PlanStep.java</span></div><h1>PlanStep.java</h1><pre class="source lang-java linenums">package edu.llapp.domain;
+
+/**
+ * a step in a learning plan
+ * includes course, order, estimated hours
+ */
+public class PlanStep {
+    private Course course;
+    private int order;         // which step in the plan(start from `1`)
+    private int estHours;      // expected hours to complete this step
+
+<span class="fc" id="L12">    public PlanStep(Course course, int order, int estHours) {</span>
+<span class="fc" id="L13">        this.course = course;</span>
+<span class="fc" id="L14">        this.order = order;</span>
+<span class="fc" id="L15">        this.estHours = estHours;</span>
+<span class="fc" id="L16">    }</span>
+
+    public Course getCourse() {
+<span class="fc" id="L19">        return course;</span>
+    }
+
+    public int getOrder() {
+<span class="nc" id="L23">        return order;</span>
+    }
+
+    public int getEstHours() {
+<span class="fc" id="L27">        return estHours;</span>
+    }
+
+    public void setCourse(Course course) {
+<span class="nc" id="L31">        this.course = course;</span>
+<span class="nc" id="L32">    }</span>
+
+    public void setOrder(int order) {
+<span class="nc" id="L35">        this.order = order;</span>
+<span class="nc" id="L36">    }</span>
+
+    public void setEstHours(int estHours) {
+<span class="nc" id="L39">        this.estHours = estHours;</span>
+<span class="nc" id="L40">    }</span>
+
+    @Override
+    public String toString() {
+<span class="nc" id="L44">        return &quot;Step &quot; + order + &quot;: &quot; + course.getTitle() + &quot; (&quot; + estHours + &quot;h)&quot;;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

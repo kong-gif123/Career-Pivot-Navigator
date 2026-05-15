@@ -1,0 +1,366 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SemanticMatcher.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">LifelongLearningApp</a> &gt; <a href="index.source.html" class="el_package">edu.llapp.strategies.matchers</a> &gt; <span class="el_source">SemanticMatcher.java</span></div><h1>SemanticMatcher.java</h1><pre class="source lang-java linenums">package edu.llapp.strategies.matchers;
+
+import edu.llapp.domain.*;
+import java.util.*;
+
+/**
+ * Semantic Matching Strategy (Upgraded Version)
+ * Considers the similarity and transferability between skills
+ * Features:
+ * - Complete skill similarity lookup table (150+ similarity relationships)
+ * - Considers skill families (e.g., programming languages, cloud platforms, data tools)
+ * - Supports similarity adjustment at skill levels
+ * @author Career Pivot Navigator Team
+ * @version 2.0
+ */
+public class SemanticMatcher implements ISkillMatcher {
+
+    // Skills Similarity Comparison Table (Two-way)
+    private Map&lt;String, Map&lt;String, Double&gt;&gt; similarityMap;
+
+<span class="fc" id="L21">    public SemanticMatcher() {</span>
+<span class="fc" id="L22">        this.similarityMap = buildSimilarityMap();</span>
+<span class="fc" id="L23">    }</span>
+
+    @Override
+    public String getName() {
+<span class="nc" id="L27">        return &quot;Semantic&quot;;</span>
+    }
+
+    @Override
+    public String getDescription() {
+<span class="nc" id="L32">        return &quot;Semantic matching with advanced similarity scoring (150+ skill relations)&quot;;</span>
+    }
+
+    @Override
+    public GapReport match(SkillSet current, SkillSet target) {
+<span class="fc" id="L37">        Set&lt;String&gt; currentSkillNames = current.getSkillNames();</span>
+<span class="fc" id="L38">        List&lt;Skill&gt; missingSkills = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L39">        List&lt;Skill&gt; weakSkills = new ArrayList&lt;&gt;();</span>
+
+<span class="fc" id="L41">        double totalScore = 0.0;</span>
+
+        // Get the list of target skills (using getItems)
+<span class="fc" id="L44">        Set&lt;Skill&gt; targetSkills = target.getItems();</span>
+<span class="fc" id="L45">        int targetCount = targetSkills.size();</span>
+
+        // Boundary condition: Target skill is empty
+<span class="pc bpc" id="L48" title="1 of 2 branches missed.">        if (targetCount == 0) {</span>
+<span class="nc" id="L49">            GapReport emptyReport = new GapReport();</span>
+<span class="nc" id="L50">            emptyReport.setScore(100.0);</span>
+<span class="nc" id="L51">            return emptyReport;</span>
+        }
+
+        // Traverse target skills
+<span class="fc bfc" id="L55" title="All 2 branches covered.">        for (Skill targetSkill : targetSkills) {</span>
+<span class="fc" id="L56">            String targetName = targetSkill.getName();</span>
+<span class="fc" id="L57">            SkillLevel targetLevel = targetSkill.getLevel();</span>
+
+            // 1. Check if there is an exact match
+<span class="fc bfc" id="L60" title="All 2 branches covered.">            if (currentSkillNames.contains(targetName)) {</span>
+                // Use getSkill to retrieve the current skill.
+<span class="fc" id="L62">                Skill currentSkill = current.getSkill(targetName);</span>
+
+<span class="pc bpc" id="L64" title="1 of 2 branches missed.">                if (currentSkill != null) {</span>
+<span class="pc bpc" id="L65" title="1 of 2 branches missed.">                    if (currentSkill.getLevel().ordinal() &gt;= targetLevel.ordinal()) {</span>
+                        // Sufficient level, perfect match
+<span class="fc" id="L67">                        totalScore += 1.0;</span>
+                    } else {
+                        // Insufficient level, considered as weak skill
+<span class="nc" id="L70">                        weakSkills.add(targetSkill);</span>
+<span class="nc" id="L71">                        totalScore += 0.5;</span>
+                    }
+<span class="nc" id="L73">                    continue;</span>
+                }
+            }
+
+            // 2. Find the most similar skills
+<span class="fc" id="L78">            double bestSimilarity = 0.0;</span>
+<span class="fc" id="L79">            String bestMatch = null;</span>
+
+<span class="fc bfc" id="L81" title="All 2 branches covered.">            for (String currentSkillName : currentSkillNames) {</span>
+<span class="fc" id="L82">                double similarity = getSimilarity(currentSkillName, targetName);</span>
+<span class="fc bfc" id="L83" title="All 2 branches covered.">                if (similarity &gt; bestSimilarity) {</span>
+<span class="fc" id="L84">                    bestSimilarity = similarity;</span>
+<span class="fc" id="L85">                    bestMatch = currentSkillName;</span>
+                }
+<span class="fc" id="L87">            }</span>
+
+            // 3. Scoring is based on similarity.
+<span class="pc bpc" id="L90" title="1 of 2 branches missed.">            if (bestSimilarity &gt;= 0.7) {</span>
+                // hign similarity
+<span class="nc" id="L92">                totalScore += bestSimilarity;</span>
+<span class="nc" id="L93">                System.out.println(&quot;✓ Similar skill found: &quot; + bestMatch + &quot; ≈ &quot; + targetName +</span>
+<span class="nc" id="L94">                        &quot; (similarity: &quot; + String.format(&quot;%.0f%%&quot;, bestSimilarity * 100) + &quot;)&quot;);</span>
+<span class="fc bfc" id="L95" title="All 2 branches covered.">            } else if (bestSimilarity &gt;= 0.4) {</span>
+                // middle similarity
+<span class="fc" id="L97">                totalScore += bestSimilarity * 0.7;</span>
+<span class="fc" id="L98">                weakSkills.add(targetSkill);</span>
+<span class="fc" id="L99">                System.out.println(&quot;⚠ Weak match: &quot; + bestMatch + &quot; ≈ &quot; + targetName +</span>
+<span class="fc" id="L100">                        &quot; (similarity: &quot; + String.format(&quot;%.0f%%&quot;, bestSimilarity * 100) + &quot;)&quot;);</span>
+            } else {
+                // none or low similarity
+<span class="fc" id="L103">                missingSkills.add(targetSkill);</span>
+            }
+<span class="fc" id="L105">        }</span>
+
+        // calculate final score
+<span class="pc bpc" id="L108" title="1 of 2 branches missed.">        double finalScore = (targetCount &gt; 0) ? (totalScore / targetCount) * 100 : 0;</span>
+
+        // general report
+<span class="fc" id="L111">        GapReport report = new GapReport();</span>
+<span class="fc" id="L112">        report.setScore(finalScore);</span>
+
+        // add missing and weak skills
+<span class="fc bfc" id="L115" title="All 2 branches covered.">        for (Skill skill : missingSkills) {</span>
+<span class="fc" id="L116">            report.getMissingSkills().add(skill);</span>
+<span class="fc" id="L117">        }</span>
+<span class="fc bfc" id="L118" title="All 2 branches covered.">        for (Skill skill : weakSkills) {</span>
+<span class="fc" id="L119">            report.getWeakSkills().add(skill);</span>
+<span class="fc" id="L120">        }</span>
+
+<span class="fc" id="L122">        return report;</span>
+    }
+
+    /**
+     * To obtain the similarity between two skills（0.0 - 1.0）
+     */
+    private double getSimilarity(String skill1, String skill2) {
+        // Completely identical
+<span class="pc bpc" id="L130" title="1 of 2 branches missed.">        if (skill1.equalsIgnoreCase(skill2)) {</span>
+<span class="nc" id="L131">            return 1.0;</span>
+        }
+
+        // Table lookup (two-way)
+<span class="fc" id="L135">        String s1 = skill1.toLowerCase();</span>
+<span class="fc" id="L136">        String s2 = skill2.toLowerCase();</span>
+
+<span class="pc bpc" id="L138" title="1 of 4 branches missed.">        if (similarityMap.containsKey(s1) &amp;&amp; similarityMap.get(s1).containsKey(s2)) {</span>
+<span class="fc" id="L139">            return similarityMap.get(s1).get(s2);</span>
+        }
+
+<span class="pc bpc" id="L142" title="2 of 4 branches missed.">        if (similarityMap.containsKey(s2) &amp;&amp; similarityMap.get(s2).containsKey(s1)) {</span>
+<span class="nc" id="L143">            return similarityMap.get(s2).get(s1);</span>
+        }
+
+        // Substring matching (fallback)
+<span class="pc bpc" id="L147" title="2 of 4 branches missed.">        if (s1.contains(s2) || s2.contains(s1)) {</span>
+<span class="nc" id="L148">            return 0.3;</span>
+        }
+
+        // Not found, return 0
+<span class="fc" id="L152">        return 0.0;</span>
+    }
+
+    /**
+     * Establish a complete skill similarity comparison table
+     */
+    private Map&lt;String, Map&lt;String, Double&gt;&gt; buildSimilarityMap() {
+<span class="fc" id="L159">        Map&lt;String, Map&lt;String, Double&gt;&gt; map = new HashMap&lt;&gt;();</span>
+
+        // ==================== family of programming languages ====================
+
+        // Python
+<span class="fc" id="L164">        addSimilarity(map, &quot;python&quot;, &quot;javascript&quot;, 0.65);</span>
+<span class="fc" id="L165">        addSimilarity(map, &quot;python&quot;, &quot;ruby&quot;, 0.70);</span>
+<span class="fc" id="L166">        addSimilarity(map, &quot;python&quot;, &quot;java&quot;, 0.55);</span>
+<span class="fc" id="L167">        addSimilarity(map, &quot;python&quot;, &quot;c++&quot;, 0.45);</span>
+<span class="fc" id="L168">        addSimilarity(map, &quot;python&quot;, &quot;c#&quot;, 0.50);</span>
+<span class="fc" id="L169">        addSimilarity(map, &quot;python&quot;, &quot;php&quot;, 0.55);</span>
+<span class="fc" id="L170">        addSimilarity(map, &quot;python&quot;, &quot;go&quot;, 0.50);</span>
+
+        // Java
+<span class="fc" id="L173">        addSimilarity(map, &quot;java&quot;, &quot;c#&quot;, 0.85);</span>
+<span class="fc" id="L174">        addSimilarity(map, &quot;java&quot;, &quot;kotlin&quot;, 0.95);</span>
+<span class="fc" id="L175">        addSimilarity(map, &quot;java&quot;, &quot;scala&quot;, 0.80);</span>
+<span class="fc" id="L176">        addSimilarity(map, &quot;java&quot;, &quot;c++&quot;, 0.70);</span>
+<span class="fc" id="L177">        addSimilarity(map, &quot;java&quot;, &quot;javascript&quot;, 0.50);</span>
+
+        // JavaScript
+<span class="fc" id="L180">        addSimilarity(map, &quot;javascript&quot;, &quot;typescript&quot;, 0.95);</span>
+<span class="fc" id="L181">        addSimilarity(map, &quot;javascript&quot;, &quot;node.js&quot;, 0.90);</span>
+<span class="fc" id="L182">        addSimilarity(map, &quot;typescript&quot;, &quot;node.js&quot;, 0.85);</span>
+
+        // C
+<span class="fc" id="L185">        addSimilarity(map, &quot;c++&quot;, &quot;c&quot;, 0.90);</span>
+<span class="fc" id="L186">        addSimilarity(map, &quot;c++&quot;, &quot;c#&quot;, 0.75);</span>
+<span class="fc" id="L187">        addSimilarity(map, &quot;c&quot;, &quot;c#&quot;, 0.70);</span>
+
+        // Other languages
+<span class="fc" id="L190">        addSimilarity(map, &quot;ruby&quot;, &quot;php&quot;, 0.65);</span>
+<span class="fc" id="L191">        addSimilarity(map, &quot;go&quot;, &quot;rust&quot;, 0.60);</span>
+<span class="fc" id="L192">        addSimilarity(map, &quot;swift&quot;, &quot;kotlin&quot;, 0.70);</span>
+
+        // ==================== Web Front-end technology ====================
+
+<span class="fc" id="L196">        addSimilarity(map, &quot;html&quot;, &quot;css&quot;, 0.80);</span>
+<span class="fc" id="L197">        addSimilarity(map, &quot;html&quot;, &quot;javascript&quot;, 0.70);</span>
+<span class="fc" id="L198">        addSimilarity(map, &quot;css&quot;, &quot;javascript&quot;, 0.65);</span>
+
+        // Front-end frameworks
+<span class="fc" id="L201">        addSimilarity(map, &quot;react&quot;, &quot;vue.js&quot;, 0.85);</span>
+<span class="fc" id="L202">        addSimilarity(map, &quot;react&quot;, &quot;angular&quot;, 0.80);</span>
+<span class="fc" id="L203">        addSimilarity(map, &quot;vue.js&quot;, &quot;angular&quot;, 0.85);</span>
+<span class="fc" id="L204">        addSimilarity(map, &quot;react&quot;, &quot;svelte&quot;, 0.75);</span>
+
+        // ==================== Backend framework ====================
+
+        // Python frameworks
+<span class="fc" id="L209">        addSimilarity(map, &quot;django&quot;, &quot;flask&quot;, 0.85);</span>
+<span class="fc" id="L210">        addSimilarity(map, &quot;django&quot;, &quot;fastapi&quot;, 0.75);</span>
+<span class="fc" id="L211">        addSimilarity(map, &quot;flask&quot;, &quot;fastapi&quot;, 0.80);</span>
+
+        // Java frameworks
+<span class="fc" id="L214">        addSimilarity(map, &quot;spring boot&quot;, &quot;spring&quot;, 0.95);</span>
+<span class="fc" id="L215">        addSimilarity(map, &quot;spring boot&quot;, &quot;java&quot;, 0.70);</span>
+
+        // JavaScript frameworks
+<span class="fc" id="L218">        addSimilarity(map, &quot;express&quot;, &quot;node.js&quot;, 0.90);</span>
+<span class="fc" id="L219">        addSimilarity(map, &quot;nest.js&quot;, &quot;node.js&quot;, 0.85);</span>
+<span class="fc" id="L220">        addSimilarity(map, &quot;express&quot;, &quot;nest.js&quot;, 0.80);</span>
+
+        // ==================== databased ====================
+
+        // SQL
+<span class="fc" id="L225">        addSimilarity(map, &quot;sql&quot;, &quot;mysql&quot;, 0.95);</span>
+<span class="fc" id="L226">        addSimilarity(map, &quot;sql&quot;, &quot;postgresql&quot;, 0.95);</span>
+<span class="fc" id="L227">        addSimilarity(map, &quot;sql&quot;, &quot;oracle&quot;, 0.90);</span>
+<span class="fc" id="L228">        addSimilarity(map, &quot;sql&quot;, &quot;sql server&quot;, 0.90);</span>
+<span class="fc" id="L229">        addSimilarity(map, &quot;mysql&quot;, &quot;postgresql&quot;, 0.90);</span>
+<span class="fc" id="L230">        addSimilarity(map, &quot;mysql&quot;, &quot;mariadb&quot;, 0.95);</span>
+
+        // NoSQL
+<span class="fc" id="L233">        addSimilarity(map, &quot;nosql&quot;, &quot;mongodb&quot;, 0.95);</span>
+<span class="fc" id="L234">        addSimilarity(map, &quot;nosql&quot;, &quot;redis&quot;, 0.85);</span>
+<span class="fc" id="L235">        addSimilarity(map, &quot;nosql&quot;, &quot;cassandra&quot;, 0.85);</span>
+<span class="fc" id="L236">        addSimilarity(map, &quot;mongodb&quot;, &quot;couchdb&quot;, 0.80);</span>
+<span class="fc" id="L237">        addSimilarity(map, &quot;mongodb&quot;, &quot;dynamodb&quot;, 0.75);</span>
+
+        // SQL vs NoSQL（low similar）
+<span class="fc" id="L240">        addSimilarity(map, &quot;sql&quot;, &quot;mongodb&quot;, 0.40);</span>
+<span class="fc" id="L241">        addSimilarity(map, &quot;sql&quot;, &quot;redis&quot;, 0.35);</span>
+<span class="fc" id="L242">        addSimilarity(map, &quot;postgresql&quot;, &quot;mongodb&quot;, 0.40);</span>
+
+        // ==================== cloud platform ====================
+
+        // three cloud giants
+<span class="fc" id="L247">        addSimilarity(map, &quot;aws&quot;, &quot;azure&quot;, 0.75);</span>
+<span class="fc" id="L248">        addSimilarity(map, &quot;aws&quot;, &quot;gcp&quot;, 0.75);</span>
+<span class="fc" id="L249">        addSimilarity(map, &quot;azure&quot;, &quot;gcp&quot;, 0.80);</span>
+
+        // cloud services
+<span class="fc" id="L252">        addSimilarity(map, &quot;aws&quot;, &quot;heroku&quot;, 0.55);</span>
+<span class="fc" id="L253">        addSimilarity(map, &quot;aws&quot;, &quot;digitalocean&quot;, 0.60);</span>
+
+        // ==================== Containers and orchestration ====================
+
+<span class="fc" id="L257">        addSimilarity(map, &quot;docker&quot;, &quot;kubernetes&quot;, 0.80);</span>
+<span class="fc" id="L258">        addSimilarity(map, &quot;docker&quot;, &quot;containerization&quot;, 0.95);</span>
+<span class="fc" id="L259">        addSimilarity(map, &quot;kubernetes&quot;, &quot;docker swarm&quot;, 0.85);</span>
+<span class="fc" id="L260">        addSimilarity(map, &quot;kubernetes&quot;, &quot;openshift&quot;, 0.85);</span>
+
+        // ==================== version control ====================
+
+<span class="fc" id="L264">        addSimilarity(map, &quot;git&quot;, &quot;github&quot;, 0.95);</span>
+<span class="fc" id="L265">        addSimilarity(map, &quot;git&quot;, &quot;gitlab&quot;, 0.95);</span>
+<span class="fc" id="L266">        addSimilarity(map, &quot;git&quot;, &quot;bitbucket&quot;, 0.90);</span>
+<span class="fc" id="L267">        addSimilarity(map, &quot;github&quot;, &quot;gitlab&quot;, 0.90);</span>
+
+        // ==================== CI/CD ====================
+
+<span class="fc" id="L271">        addSimilarity(map, &quot;jenkins&quot;, &quot;github actions&quot;, 0.80);</span>
+<span class="fc" id="L272">        addSimilarity(map, &quot;jenkins&quot;, &quot;gitlab ci&quot;, 0.80);</span>
+<span class="fc" id="L273">        addSimilarity(map, &quot;github actions&quot;, &quot;gitlab ci&quot;, 0.85);</span>
+<span class="fc" id="L274">        addSimilarity(map, &quot;jenkins&quot;, &quot;circleci&quot;, 0.75);</span>
+
+        // ==================== Data analysis tools ====================
+
+        // BI tool（high similar）
+<span class="fc" id="L279">        addSimilarity(map, &quot;tableau&quot;, &quot;power bi&quot;, 0.90);</span>
+<span class="fc" id="L280">        addSimilarity(map, &quot;tableau&quot;, &quot;looker&quot;, 0.85);</span>
+<span class="fc" id="L281">        addSimilarity(map, &quot;power bi&quot;, &quot;looker&quot;, 0.85);</span>
+<span class="fc" id="L282">        addSimilarity(map, &quot;tableau&quot;, &quot;qlik&quot;, 0.80);</span>
+
+        // Excel
+<span class="fc" id="L285">        addSimilarity(map, &quot;excel&quot;, &quot;tableau&quot;, 0.75);</span>
+<span class="fc" id="L286">        addSimilarity(map, &quot;excel&quot;, &quot;power bi&quot;, 0.80);</span>
+<span class="fc" id="L287">        addSimilarity(map, &quot;excel&quot;, &quot;google sheets&quot;, 0.95);</span>
+<span class="fc" id="L288">        addSimilarity(map, &quot;excel&quot;, &quot;data analysis&quot;, 0.70);</span>
+
+        // Data Science Tools
+<span class="fc" id="L291">        addSimilarity(map, &quot;jupyter&quot;, &quot;python&quot;, 0.80);</span>
+<span class="fc" id="L292">        addSimilarity(map, &quot;pandas&quot;, &quot;python&quot;, 0.85);</span>
+<span class="fc" id="L293">        addSimilarity(map, &quot;numpy&quot;, &quot;python&quot;, 0.85);</span>
+<span class="fc" id="L294">        addSimilarity(map, &quot;pandas&quot;, &quot;numpy&quot;, 0.80);</span>
+
+        // ==================== Machine Learning / AI ====================
+
+<span class="fc" id="L298">        addSimilarity(map, &quot;machine learning&quot;, &quot;deep learning&quot;, 0.85);</span>
+<span class="fc" id="L299">        addSimilarity(map, &quot;machine learning&quot;, &quot;ai&quot;, 0.90);</span>
+<span class="fc" id="L300">        addSimilarity(map, &quot;deep learning&quot;, &quot;neural networks&quot;, 0.95);</span>
+
+        // ML frameworks
+<span class="fc" id="L303">        addSimilarity(map, &quot;tensorflow&quot;, &quot;pytorch&quot;, 0.90);</span>
+<span class="fc" id="L304">        addSimilarity(map, &quot;tensorflow&quot;, &quot;keras&quot;, 0.85);</span>
+<span class="fc" id="L305">        addSimilarity(map, &quot;pytorch&quot;, &quot;keras&quot;, 0.80);</span>
+<span class="fc" id="L306">        addSimilarity(map, &quot;scikit-learn&quot;, &quot;machine learning&quot;, 0.85);</span>
+
+        // ==================== design tools ====================
+
+<span class="fc" id="L310">        addSimilarity(map, &quot;figma&quot;, &quot;sketch&quot;, 0.90);</span>
+<span class="fc" id="L311">        addSimilarity(map, &quot;figma&quot;, &quot;adobe xd&quot;, 0.90);</span>
+<span class="fc" id="L312">        addSimilarity(map, &quot;sketch&quot;, &quot;adobe xd&quot;, 0.85);</span>
+<span class="fc" id="L313">        addSimilarity(map, &quot;photoshop&quot;, &quot;illustrator&quot;, 0.75);</span>
+
+        // UI/UX
+<span class="fc" id="L316">        addSimilarity(map, &quot;ui/ux&quot;, &quot;figma&quot;, 0.80);</span>
+<span class="fc" id="L317">        addSimilarity(map, &quot;ui/ux&quot;, &quot;sketch&quot;, 0.80);</span>
+<span class="fc" id="L318">        addSimilarity(map, &quot;ui/ux&quot;, &quot;adobe xd&quot;, 0.80);</span>
+
+        // ==================== Project Management ====================
+
+<span class="fc" id="L322">        addSimilarity(map, &quot;agile&quot;, &quot;scrum&quot;, 0.95);</span>
+<span class="fc" id="L323">        addSimilarity(map, &quot;agile&quot;, &quot;kanban&quot;, 0.85);</span>
+<span class="fc" id="L324">        addSimilarity(map, &quot;scrum&quot;, &quot;kanban&quot;, 0.80);</span>
+<span class="fc" id="L325">        addSimilarity(map, &quot;agile&quot;, &quot;project management&quot;, 0.80);</span>
+<span class="fc" id="L326">        addSimilarity(map, &quot;jira&quot;, &quot;trello&quot;, 0.75);</span>
+<span class="fc" id="L327">        addSimilarity(map, &quot;jira&quot;, &quot;asana&quot;, 0.75);</span>
+
+        // ==================== API and Architecture ====================
+
+<span class="fc" id="L331">        addSimilarity(map, &quot;rest api&quot;, &quot;graphql&quot;, 0.80);</span>
+<span class="fc" id="L332">        addSimilarity(map, &quot;rest api&quot;, &quot;api&quot;, 0.95);</span>
+<span class="fc" id="L333">        addSimilarity(map, &quot;microservices&quot;, &quot;rest api&quot;, 0.75);</span>
+<span class="fc" id="L334">        addSimilarity(map, &quot;microservices&quot;, &quot;docker&quot;, 0.70);</span>
+
+<span class="fc" id="L336">        System.out.println(&quot;Semantic Matcher: Loaded &quot; + countTotalRelations(map) + &quot; skill similarity relations&quot;);</span>
+
+<span class="fc" id="L338">        return map;</span>
+    }
+
+    /**
+     * Auxiliary method: Bidirectional similarity addition
+     */
+    private void addSimilarity(Map&lt;String, Map&lt;String, Double&gt;&gt; map,
+                               String skill1, String skill2, double similarity) {
+        // skill1 → skill2
+<span class="fc" id="L347">        map.putIfAbsent(skill1, new HashMap&lt;&gt;());</span>
+<span class="fc" id="L348">        map.get(skill1).put(skill2, similarity);</span>
+
+        // skill2 → skill1（bilateral）
+<span class="fc" id="L351">        map.putIfAbsent(skill2, new HashMap&lt;&gt;());</span>
+<span class="fc" id="L352">        map.get(skill2).put(skill1, similarity);</span>
+<span class="fc" id="L353">    }</span>
+
+    /**
+     * Calculate the total number of similarity relationships.
+     */
+    private int countTotalRelations(Map&lt;String, Map&lt;String, Double&gt;&gt; map) {
+<span class="fc" id="L359">        int count = 0;</span>
+<span class="fc bfc" id="L360" title="All 2 branches covered.">        for (Map&lt;String, Double&gt; relations : map.values()) {</span>
+<span class="fc" id="L361">            count += relations.size();</span>
+<span class="fc" id="L362">        }</span>
+<span class="fc" id="L363">        return count / 2; // bilateral，Divide by 2</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

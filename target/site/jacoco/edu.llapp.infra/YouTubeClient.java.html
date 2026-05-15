@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>YouTubeClient.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">LifelongLearningApp</a> &gt; <a href="index.source.html" class="el_package">edu.llapp.infra</a> &gt; <span class="el_source">YouTubeClient.java</span></div><h1>YouTubeClient.java</h1><pre class="source lang-java linenums">package edu.llapp.infra;
+
+import edu.llapp.domain.Course;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
+import java.util.logging.Logger;
+
+/**
+ * YouTube Data API v3 client.
+ * Searches for instructional videos and maps them to Course objects.
+ * Includes in-memory caching and exponential backoff retry logic.
+ */
+public class YouTubeClient {
+<span class="fc" id="L23">    private static final Logger logger = Logger.getLogger(YouTubeClient.class.getName());</span>
+
+    private String apiKey;
+    private String baseUrl;
+    private int timeoutMs;
+    private int maxRetries;
+    private SimpleCache&lt;String, List&lt;Course&gt;&gt; cache;
+
+<span class="fc" id="L31">    public YouTubeClient() {</span>
+<span class="fc" id="L32">        this.apiKey = ConfigLoader.getYouTubeApiKey();</span>
+<span class="fc" id="L33">        this.baseUrl = ConfigLoader.getYouTubeBaseUrl();</span>
+<span class="fc" id="L34">        this.timeoutMs = ConfigLoader.getApiTimeout();</span>
+<span class="fc" id="L35">        this.maxRetries = ConfigLoader.getMaxRetries();</span>
+<span class="fc" id="L36">        this.cache = new SimpleCache&lt;&gt;(ConfigLoader.getCacheTTL());</span>
+<span class="fc" id="L37">    }</span>
+
+    /**
+     * Search for courses matching the given skill.
+     * Results are cached by skill name + maxResults.
+     *
+     * @param skillName  the skill to search for (e.g. &quot;Python&quot;)
+     * @param maxResults maximum number of results
+     * @return list of matching courses
+     */
+    public List&lt;Course&gt; searchCourses(String skillName, int maxResults) {
+<span class="nc" id="L48">        String cacheKey = skillName + &quot;_&quot; + maxResults;</span>
+
+<span class="nc" id="L50">        List&lt;Course&gt; cached = cache.get(cacheKey);</span>
+<span class="nc bnc" id="L51" title="All 2 branches missed.">        if (cached != null) {</span>
+<span class="nc" id="L52">            return cached;</span>
+        }
+
+<span class="nc" id="L55">        String query = skillName + &quot; tutorial beginner&quot;;</span>
+
+<span class="nc bnc" id="L57" title="All 2 branches missed.">        for (int attempt = 0; attempt &lt;= maxRetries; attempt++) {</span>
+            try {
+<span class="nc" id="L59">                List&lt;Course&gt; results = searchWithRetry(query, maxResults);</span>
+
+<span class="nc bnc" id="L61" title="All 4 branches missed.">                if (results != null &amp;&amp; !results.isEmpty()) {</span>
+<span class="nc" id="L62">                    cache.put(cacheKey, results);</span>
+                }
+
+<span class="nc" id="L65">                return results;</span>
+
+<span class="nc" id="L67">            } catch (Exception e) {</span>
+<span class="nc" id="L68">                logger.warning(&quot;Attempt &quot; + (attempt + 1) + &quot; failed: &quot; + e.getMessage());</span>
+
+<span class="nc bnc" id="L70" title="All 2 branches missed.">                if (attempt == maxRetries) {</span>
+<span class="nc" id="L71">                    logger.severe(&quot;All retries exhausted for query: &quot; + query);</span>
+<span class="nc" id="L72">                    throw new RuntimeException(&quot;YouTube API failed after &quot; + maxRetries + &quot; retries&quot;, e);</span>
+                }
+
+                // Exponential backoff
+                try {
+<span class="nc" id="L77">                    Thread.sleep((long) Math.pow(2, attempt) * 1000);</span>
+<span class="nc" id="L78">                } catch (InterruptedException ie) {</span>
+<span class="nc" id="L79">                    Thread.currentThread().interrupt();</span>
+<span class="nc" id="L80">                }</span>
+            }
+        }
+
+<span class="nc" id="L84">        return new ArrayList&lt;&gt;();</span>
+    }
+
+    private List&lt;Course&gt; searchWithRetry(String query, int maxResults) throws Exception {
+<span class="nc" id="L88">        String encodedQuery = URLEncoder.encode(query, StandardCharsets.UTF_8);</span>
+<span class="nc" id="L89">        String urlString = String.format(</span>
+                &quot;%s/search?part=snippet&amp;q=%s&amp;type=video&amp;videoDuration=medium&amp;maxResults=%d&amp;key=%s&quot;,
+<span class="nc" id="L91">                baseUrl, encodedQuery, maxResults, apiKey</span>
+        );
+
+<span class="nc" id="L94">        logger.info(&quot;Searching YouTube: &quot; + query);</span>
+
+<span class="nc" id="L96">        URL url = new URL(urlString);</span>
+<span class="nc" id="L97">        HttpURLConnection conn = (HttpURLConnection) url.openConnection();</span>
+<span class="nc" id="L98">        conn.setRequestMethod(&quot;GET&quot;);</span>
+<span class="nc" id="L99">        conn.setConnectTimeout(timeoutMs);</span>
+<span class="nc" id="L100">        conn.setReadTimeout(timeoutMs);</span>
+
+<span class="nc" id="L102">        int responseCode = conn.getResponseCode();</span>
+
+<span class="nc bnc" id="L104" title="All 2 branches missed.">        if (responseCode == 403) {</span>
+<span class="nc" id="L105">            throw new RuntimeException(&quot;API quota exceeded or key invalid&quot;);</span>
+        }
+<span class="nc bnc" id="L107" title="All 2 branches missed.">        if (responseCode != 200) {</span>
+<span class="nc" id="L108">            throw new RuntimeException(&quot;HTTP error: &quot; + responseCode);</span>
+        }
+
+<span class="nc" id="L111">        BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));</span>
+<span class="nc" id="L112">        StringBuilder response = new StringBuilder();</span>
+        String line;
+<span class="nc bnc" id="L114" title="All 2 branches missed.">        while ((line = in.readLine()) != null) {</span>
+<span class="nc" id="L115">            response.append(line);</span>
+        }
+<span class="nc" id="L117">        in.close();</span>
+
+<span class="nc" id="L119">        return parseYouTubeResponse(response.toString(), query);</span>
+    }
+
+    private List&lt;Course&gt; parseYouTubeResponse(String jsonResponse, String originalQuery) {
+<span class="nc" id="L123">        List&lt;Course&gt; courses = new ArrayList&lt;&gt;();</span>
+
+        try {
+<span class="nc" id="L126">            JsonObject root = JsonParser.parseString(jsonResponse).getAsJsonObject();</span>
+<span class="nc" id="L127">            JsonArray items = root.getAsJsonArray(&quot;items&quot;);</span>
+
+<span class="nc bnc" id="L129" title="All 4 branches missed.">            if (items == null || items.size() == 0) {</span>
+<span class="nc" id="L130">                logger.info(&quot;No results found for: &quot; + originalQuery);</span>
+<span class="nc" id="L131">                return courses;</span>
+            }
+
+<span class="nc bnc" id="L134" title="All 2 branches missed.">            for (int i = 0; i &lt; items.size(); i++) {</span>
+<span class="nc" id="L135">                JsonObject item = items.get(i).getAsJsonObject();</span>
+<span class="nc" id="L136">                JsonObject snippet = item.getAsJsonObject(&quot;snippet&quot;);</span>
+<span class="nc" id="L137">                JsonObject id = item.getAsJsonObject(&quot;id&quot;);</span>
+
+<span class="nc" id="L139">                String videoId = id.get(&quot;videoId&quot;).getAsString();</span>
+<span class="nc" id="L140">                String title = snippet.get(&quot;title&quot;).getAsString();</span>
+<span class="nc" id="L141">                String channelTitle = snippet.get(&quot;channelTitle&quot;).getAsString();</span>
+<span class="nc" id="L142">                String videoUrl = &quot;https://www.youtube.com/watch?v=&quot; + videoId;</span>
+
+                // Duration is estimated from title keywords (full lookup requires a separate API call)
+<span class="nc" id="L145">                int estimatedHours = estimateDuration(title);</span>
+<span class="nc" id="L146">                Set&lt;String&gt; skills = extractSkills(originalQuery);</span>
+
+<span class="nc" id="L148">                courses.add(new Course(</span>
+                        &quot;YT-&quot; + videoId,
+<span class="nc" id="L150">                        cleanTitle(title),</span>
+                        &quot;YouTube - &quot; + channelTitle,
+                        videoUrl,
+                        estimatedHours,
+                        skills
+                ));
+            }
+
+<span class="nc" id="L158">            logger.info(&quot;Found &quot; + courses.size() + &quot; courses from YouTube&quot;);</span>
+
+<span class="nc" id="L160">        } catch (Exception e) {</span>
+<span class="nc" id="L161">            logger.severe(&quot;Error parsing YouTube response: &quot; + e.getMessage());</span>
+<span class="nc" id="L162">        }</span>
+
+<span class="nc" id="L164">        return courses;</span>
+    }
+
+    /** Remove brackets and extra whitespace from video titles. */
+    private String cleanTitle(String title) {
+<span class="nc" id="L169">        return title.replaceAll(&quot;[\\[\\](){}|]&quot;, &quot;&quot;)</span>
+<span class="nc" id="L170">                .replaceAll(&quot;\\s+&quot;, &quot; &quot;)</span>
+<span class="nc" id="L171">                .trim();</span>
+    }
+
+    /** Estimate course duration in hours based on title keywords. */
+    private int estimateDuration(String title) {
+<span class="nc" id="L176">        String lower = title.toLowerCase();</span>
+<span class="nc bnc" id="L177" title="All 4 branches missed.">        if (lower.contains(&quot;crash course&quot;) || lower.contains(&quot;complete&quot;)) return 15;</span>
+<span class="nc bnc" id="L178" title="All 4 branches missed.">        if (lower.contains(&quot;full&quot;) || lower.contains(&quot;tutorial&quot;)) return 12;</span>
+<span class="nc bnc" id="L179" title="All 4 branches missed.">        if (lower.contains(&quot;quick&quot;) || lower.contains(&quot;intro&quot;)) return 8;</span>
+<span class="nc" id="L180">        return 10;</span>
+    }
+
+    /** Extract skill name from the search query string. */
+    private Set&lt;String&gt; extractSkills(String query) {
+<span class="nc" id="L185">        Set&lt;String&gt; skills = new HashSet&lt;&gt;();</span>
+<span class="nc" id="L186">        String cleaned = query.toLowerCase()</span>
+<span class="nc" id="L187">                .replaceAll(&quot;tutorial|beginner|course|complete|full&quot;, &quot;&quot;)</span>
+<span class="nc" id="L188">                .trim();</span>
+<span class="nc bnc" id="L189" title="All 2 branches missed.">        if (!cleaned.isEmpty()) {</span>
+<span class="nc" id="L190">            skills.add(capitalize(cleaned));</span>
+        }
+<span class="nc" id="L192">        return skills;</span>
+    }
+
+    private String capitalize(String str) {
+<span class="nc bnc" id="L196" title="All 4 branches missed.">        if (str == null || str.isEmpty()) return str;</span>
+<span class="nc" id="L197">        return str.substring(0, 1).toUpperCase() + str.substring(1);</span>
+    }
+
+    /** Test API connectivity by running a minimal search. */
+    public boolean testConnection() {
+        try {
+<span class="nc" id="L203">            List&lt;Course&gt; results = searchCourses(&quot;Java&quot;, 1);</span>
+<span class="nc bnc" id="L204" title="All 2 branches missed.">            return !results.isEmpty();</span>
+<span class="nc" id="L205">        } catch (Exception e) {</span>
+<span class="nc" id="L206">            logger.warning(&quot;API connection test failed: &quot; + e.getMessage());</span>
+<span class="nc" id="L207">            return false;</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

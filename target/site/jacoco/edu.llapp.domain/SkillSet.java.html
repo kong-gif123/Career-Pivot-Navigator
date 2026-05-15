@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SkillSet.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">LifelongLearningApp</a> &gt; <a href="index.source.html" class="el_package">edu.llapp.domain</a> &gt; <span class="el_source">SkillSet.java</span></div><h1>SkillSet.java</h1><pre class="source lang-java linenums">package edu.llapp.domain;
+
+import java.util.HashSet;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+/**
+ * skill set class
+ * Manage a set of skills, providing operations such as adding and querying.
+ */
+public class SkillSet {
+    private Set&lt;Skill&gt; items;
+
+<span class="fc" id="L14">    public SkillSet() {</span>
+<span class="fc" id="L15">        this.items = new HashSet&lt;&gt;();</span>
+<span class="fc" id="L16">    }</span>
+
+    /**
+     * add a skill
+     */
+    public void addSkill(Skill skill) {
+<span class="fc" id="L22">        items.add(skill);</span>
+<span class="fc" id="L23">    }</span>
+
+    /**
+     * Check if you possess a certain skill (compare only the name, not case sensitive).
+     */
+    public boolean hasSkill(String skillName) {
+<span class="fc" id="L29">        return items.stream()</span>
+<span class="fc" id="L30">                .anyMatch(s -&gt; s.getName().equalsIgnoreCase(skillName));</span>
+    }
+
+    /**
+     * Get skills by name
+     */
+    public Skill getSkill(String skillName) {
+<span class="fc" id="L37">        return items.stream()</span>
+<span class="fc" id="L38">                .filter(s -&gt; s.getName().equalsIgnoreCase(skillName))</span>
+<span class="fc" id="L39">                .findFirst()</span>
+<span class="fc" id="L40">                .orElse(null);</span>
+    }
+
+    /**
+     * get all skills
+     */
+    public Set&lt;Skill&gt; getItems() {
+<span class="fc" id="L47">        return items;</span>
+    }
+
+    /**
+     * get number of skills
+     */
+    public int size() {
+<span class="fc" id="L54">        return items.size();</span>
+    }
+
+    /**
+     * check if empty
+     */
+    public boolean isEmpty() {
+<span class="fc" id="L61">        return items.isEmpty();</span>
+    }
+
+    /**
+     * get skill names
+     */
+    public Set&lt;String&gt; getSkillNames() {
+<span class="fc" id="L68">        return items.stream()</span>
+<span class="fc" id="L69">                .map(Skill::getName)</span>
+<span class="fc" id="L70">                .collect(Collectors.toSet());</span>
+    }
+
+    @Override
+    public String toString() {
+<span class="nc" id="L75">        return &quot;SkillSet{&quot; + items.size() + &quot; skills: &quot; + getSkillNames() + &quot;}&quot;;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

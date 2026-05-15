@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ApiClient.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">LifelongLearningApp</a> &gt; <a href="index.source.html" class="el_package">edu.llapp.infra</a> &gt; <span class="el_source">ApiClient.java</span></div><h1>ApiClient.java</h1><pre class="source lang-java linenums">package edu.llapp.infra;
+
+import edu.llapp.domain.Course;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.logging.Logger;
+
+/**
+ * Unified API entry point.
+ * Coordinates YouTube API calls, caching, and fallback to local catalog.
+ */
+public class ApiClient {
+<span class="fc" id="L13">    private static final Logger logger = Logger.getLogger(ApiClient.class.getName());</span>
+
+    private YouTubeClient youtubeClient;
+    private FallbackRouter fallbackRouter;
+    private boolean useApi;
+
+    // Metadata for GUI: tracks fallback status of the last call
+<span class="fc" id="L20">    private boolean lastCallUsedFallback = false;</span>
+<span class="fc" id="L21">    private String lastCallNote = &quot;&quot;;</span>
+
+    // Metadata for GUI: tracks fallback status of the last batch call
+<span class="fc" id="L24">    private boolean lastBatchUsedFallback = false;</span>
+<span class="fc" id="L25">    private List&lt;String&gt; lastBatchFallbackSkills = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L26">    private String lastBatchNote = &quot;&quot;;</span>
+
+<span class="fc" id="L28">    public ApiClient(boolean useApi) {</span>
+<span class="fc" id="L29">        this.useApi = useApi;</span>
+<span class="fc" id="L30">        this.youtubeClient = new YouTubeClient();</span>
+<span class="fc" id="L31">        this.fallbackRouter = new FallbackRouter(new LocalCatalogRepository());</span>
+<span class="fc" id="L32">    }</span>
+
+    /**
+     * Search for courses for a given skill.
+     * Automatically falls back to the local catalog if the API is unavailable or returns no results.
+     *
+     * @param skillName  the skill to search for
+     * @param maxResults maximum number of results to return
+     * @return list of matching courses
+     */
+    public List&lt;Course&gt; searchCourses(String skillName, int maxResults) {
+<span class="fc" id="L43">        lastCallUsedFallback = false;</span>
+<span class="fc" id="L44">        lastCallNote = &quot;YouTube API&quot;;</span>
+
+<span class="pc bpc" id="L46" title="1 of 2 branches missed.">        if (!useApi) {</span>
+<span class="fc" id="L47">            logger.info(&quot;API disabled — using local catalog for: &quot; + skillName);</span>
+<span class="fc" id="L48">            lastCallNote = &quot;Local catalog (API disabled)&quot;;</span>
+<span class="fc" id="L49">            return fallbackRouter.getLocalCourses(skillName);</span>
+        }
+
+        try {
+<span class="nc" id="L53">            logger.info(&quot;Searching YouTube API for: &quot; + skillName);</span>
+<span class="nc" id="L54">            List&lt;Course&gt; results = youtubeClient.searchCourses(skillName, maxResults);</span>
+
+<span class="nc bnc" id="L56" title="All 2 branches missed.">            if (results.isEmpty()) {</span>
+<span class="nc" id="L57">                logger.warning(&quot;No results from API — falling back to local catalog&quot;);</span>
+<span class="nc" id="L58">                lastCallUsedFallback = true;</span>
+<span class="nc" id="L59">                lastCallNote = &quot;API returned 0 results, using local catalog&quot;;</span>
+<span class="nc" id="L60">                return fallbackRouter.getLocalCourses(skillName);</span>
+            }
+
+<span class="nc" id="L63">            return results;</span>
+
+<span class="nc" id="L65">        } catch (Exception e) {</span>
+<span class="nc" id="L66">            logger.severe(&quot;API call failed: &quot; + e.getMessage() + &quot; — switching to fallback&quot;);</span>
+<span class="nc" id="L67">            lastCallUsedFallback = true;</span>
+<span class="nc" id="L68">            lastCallNote = &quot;API unavailable, using local catalog&quot;;</span>
+<span class="nc" id="L69">            return fallbackRouter.getLocalCourses(skillName);</span>
+        }
+    }
+
+    /**
+     * Search for courses across multiple skills in batch.
+     *
+     * @param skillNames        list of skills to search for
+     * @param maxResultsPerSkill maximum results per skill
+     * @return combined list of courses
+     */
+    public List&lt;Course&gt; searchMultipleSkills(List&lt;String&gt; skillNames, int maxResultsPerSkill) {
+<span class="fc" id="L81">        List&lt;Course&gt; allCourses = new ArrayList&lt;&gt;();</span>
+
+<span class="fc" id="L83">        lastBatchUsedFallback = false;</span>
+<span class="fc" id="L84">        lastBatchFallbackSkills = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L85">        lastBatchNote = &quot;YouTube API&quot;;</span>
+
+<span class="fc bfc" id="L87" title="All 2 branches covered.">        for (String skill : skillNames) {</span>
+<span class="fc" id="L88">            List&lt;Course&gt; courses = searchCourses(skill, maxResultsPerSkill);</span>
+<span class="fc" id="L89">            allCourses.addAll(courses);</span>
+
+<span class="pc bpc" id="L91" title="3 of 4 branches missed.">            if (useApi &amp;&amp; lastCallUsedFallback) {</span>
+<span class="nc" id="L92">                lastBatchUsedFallback = true;</span>
+<span class="nc" id="L93">                lastBatchFallbackSkills.add(skill);</span>
+            }
+<span class="fc" id="L95">        }</span>
+
+<span class="pc bpc" id="L97" title="1 of 2 branches missed.">        if (!useApi) {</span>
+<span class="fc" id="L98">            lastBatchNote = &quot;Local catalog (API disabled)&quot;;</span>
+<span class="nc bnc" id="L99" title="All 2 branches missed.">        } else if (lastBatchUsedFallback) {</span>
+<span class="nc" id="L100">            lastBatchNote = &quot;YouTube API (partial) + local fallback&quot;;</span>
+        }
+
+<span class="fc" id="L103">        return allCourses;</span>
+    }
+
+    /** @return true if the last batch search used fallback for at least one skill */
+    public boolean wasLastBatchFallbackUsed() {
+<span class="nc" id="L108">        return lastBatchUsedFallback;</span>
+    }
+
+    /** @return skills that fell back to local catalog in the last batch search */
+    public List&lt;String&gt; getLastBatchFallbackSkills() {
+<span class="nc" id="L113">        return new ArrayList&lt;&gt;(lastBatchFallbackSkills);</span>
+    }
+
+    /** @return human-readable source note for the last batch search */
+    public String getLastBatchNote() {
+<span class="nc" id="L118">        return lastBatchNote;</span>
+    }
+
+    /** Toggle between live API and local catalog mode. */
+    public void setUseApi(boolean useApi) {
+<span class="fc" id="L123">        this.useApi = useApi;</span>
+<span class="fc bfc" id="L124" title="All 2 branches covered.">        logger.info(&quot;API mode: &quot; + (useApi ? &quot;ENABLED&quot; : &quot;DISABLED&quot;));</span>
+<span class="fc" id="L125">    }</span>
+
+    public boolean isUsingApi() {
+<span class="nc" id="L128">        return useApi;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

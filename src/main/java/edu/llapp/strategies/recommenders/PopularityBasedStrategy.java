@@ -36,9 +36,9 @@ public class PopularityBasedStrategy implements ICourseStrategy {
                     .anyMatch(weakSkillNames::contains);
 
             if (fillsMissing) {
-                result.addCourse(course, new Reason("FILLS_GAP", "補足缺失技能"));
+                result.addCourse(course, new Reason("FILLS_GAP", "Fills a missing skill gap"));
             } else if (improvesWeak) {
-                result.addCourse(course, new Reason("IMPROVES_SKILL", "提升薄弱技能"));
+                result.addCourse(course, new Reason("IMPROVES_SKILL", "Strengthens a weak skill"));
             }
 
             // A maximum of 5 courses can be recommended.

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PopularityBasedStrategy.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">LifelongLearningApp</a> &gt; <a href="index.source.html" class="el_package">edu.llapp.strategies.recommenders</a> &gt; <span class="el_source">PopularityBasedStrategy.java</span></div><h1>PopularityBasedStrategy.java</h1><pre class="source lang-java linenums">package edu.llapp.strategies.recommenders;
+
+import edu.llapp.domain.*;
+import java.util.*;
+import java.util.stream.Collectors;
+
+/**
+ * Popularity-based recommendation strategy
+ * Prioritize recommending courses that can bridge skill gaps
+ */
+<span class="fc" id="L11">public class PopularityBasedStrategy implements ICourseStrategy {</span>
+
+    @Override
+    public String getAlgorithmType() {
+<span class="fc" id="L15">        return &quot;PopularityBased&quot;;</span>
+    }
+
+    @Override
+    public CourseListWithReasons recommend(GapReport gap, UserProfile profile, List&lt;Course&gt; availableCourses) {
+<span class="fc" id="L20">        CourseListWithReasons result = new CourseListWithReasons();</span>
+
+        // Obtain the name of the missing skill
+<span class="fc" id="L23">        Set&lt;String&gt; missingSkillNames = gap.getMissingSkills().stream()</span>
+<span class="fc" id="L24">                .map(Skill::getName)</span>
+<span class="fc" id="L25">                .collect(Collectors.toSet());</span>
+
+<span class="fc" id="L27">        Set&lt;String&gt; weakSkillNames = gap.getWeakSkills().stream()</span>
+<span class="fc" id="L28">                .map(Skill::getName)</span>
+<span class="fc" id="L29">                .collect(Collectors.toSet());</span>
+
+        // Recommend courses that can fill the gaps in your knowledge.
+<span class="fc bfc" id="L32" title="All 2 branches covered.">        for (Course course : availableCourses) {</span>
+<span class="fc" id="L33">            boolean fillsMissing = course.getSkills().stream()</span>
+<span class="fc" id="L34">                    .anyMatch(missingSkillNames::contains);</span>
+<span class="fc" id="L35">            boolean improvesWeak = course.getSkills().stream()</span>
+<span class="fc" id="L36">                    .anyMatch(weakSkillNames::contains);</span>
+
+<span class="pc bpc" id="L38" title="1 of 2 branches missed.">            if (fillsMissing) {</span>
+<span class="fc" id="L39">                result.addCourse(course, new Reason(&quot;FILLS_GAP&quot;, &quot;補足缺失技能&quot;));</span>
+<span class="nc bnc" id="L40" title="All 2 branches missed.">            } else if (improvesWeak) {</span>
+<span class="nc" id="L41">                result.addCourse(course, new Reason(&quot;IMPROVES_SKILL&quot;, &quot;提升薄弱技能&quot;));</span>
+            }
+
+            // A maximum of 5 courses can be recommended.
+<span class="pc bpc" id="L45" title="1 of 2 branches missed.">            if (result.size() &gt;= 5) break;</span>
+<span class="fc" id="L46">        }</span>
+
+<span class="fc" id="L48">        return result;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

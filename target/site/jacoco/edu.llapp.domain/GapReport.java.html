@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GapReport.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">LifelongLearningApp</a> &gt; <a href="index.source.html" class="el_package">edu.llapp.domain</a> &gt; <span class="el_source">GapReport.java</span></div><h1>GapReport.java</h1><pre class="source lang-java linenums">package edu.llapp.domain;
+
+import java.util.*;
+
+/**
+ * Skills Gap Report
+ * includes missing and weak skills, overall score, etc.
+ *
+ * version 2.0 - supports new Semantic Matcher
+ */
+public class GapReport {
+    private SkillSet currentSkills;     // user current skill
+    private SkillSet targetSkills;      // target skill set
+    private double score;               // overall score (0-100)
+    private List&lt;Skill&gt; missingSkills;  // Skills that are completely absent (use a List to maintain order)
+    private List&lt;Skill&gt; weakSkills;     // Skills that exist but are not at the required level
+
+    /**
+     * empty constructor
+     */
+<span class="fc" id="L21">    public GapReport() {</span>
+<span class="fc" id="L22">        this.missingSkills = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L23">        this.weakSkills = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L24">        this.score = 0.0;</span>
+<span class="fc" id="L25">    }</span>
+
+    /**
+     * Full constructor (supports the new Semantic Matcher)
+     */
+    public GapReport(SkillSet current, SkillSet target, double score,
+<span class="nc" id="L31">                     List&lt;Skill&gt; missingSkills, List&lt;Skill&gt; weakSkills) {</span>
+<span class="nc" id="L32">        this.currentSkills = current;</span>
+<span class="nc" id="L33">        this.targetSkills = target;</span>
+<span class="nc" id="L34">        this.score = score;</span>
+<span class="nc" id="L35">        this.missingSkills = new ArrayList&lt;&gt;(missingSkills);</span>
+<span class="nc" id="L36">        this.weakSkills = new ArrayList&lt;&gt;(weakSkills);</span>
+<span class="nc" id="L37">    }</span>
+
+    // ==================== Getters ====================
+
+    public SkillSet getCurrentSkills() {
+<span class="nc" id="L42">        return currentSkills;</span>
+    }
+
+    public SkillSet getTargetSkills() {
+<span class="nc" id="L46">        return targetSkills;</span>
+    }
+
+    public List&lt;Skill&gt; getMissingSkills() {
+<span class="fc" id="L50">        return missingSkills;</span>
+    }
+
+    public List&lt;Skill&gt; getWeakSkills() {
+<span class="fc" id="L54">        return weakSkills;</span>
+    }
+
+    public double getScore() {
+<span class="fc" id="L58">        return score;</span>
+    }
+
+    // ==================== Setters ====================
+
+    public void setCurrentSkills(SkillSet currentSkills) {
+<span class="nc" id="L64">        this.currentSkills = currentSkills;</span>
+<span class="nc" id="L65">    }</span>
+
+    public void setTargetSkills(SkillSet targetSkills) {
+<span class="nc" id="L68">        this.targetSkills = targetSkills;</span>
+<span class="nc" id="L69">    }</span>
+
+    public void setMissingSkills(List&lt;Skill&gt; missingSkills) {
+<span class="fc" id="L72">        this.missingSkills = missingSkills;</span>
+<span class="fc" id="L73">    }</span>
+
+    public void setWeakSkills(List&lt;Skill&gt; weakSkills) {
+<span class="fc" id="L76">        this.weakSkills = weakSkills;</span>
+<span class="fc" id="L77">    }</span>
+
+    public void setScore(double score) {
+<span class="fc" id="L80">        this.score = score;</span>
+<span class="fc" id="L81">    }</span>
+
+    // ==================== Convenience methods ====================
+
+    /**
+     * check if there are any gaps
+     */
+    public boolean hasGaps() {
+<span class="pc bpc" id="L89" title="3 of 4 branches missed.">        return !missingSkills.isEmpty() || !weakSkills.isEmpty();</span>
+    }
+
+    /**
+     * get total number of gaps
+     */
+    public int getTotalGaps() {
+<span class="nc" id="L96">        return missingSkills.size() + weakSkills.size();</span>
+    }
+
+    /**
+     * add missing skill
+     */
+    public void addMissingSkill(Skill skill) {
+<span class="nc bnc" id="L103" title="All 2 branches missed.">        if (!missingSkills.contains(skill)) {</span>
+<span class="nc" id="L104">            missingSkills.add(skill);</span>
+        }
+<span class="nc" id="L106">    }</span>
+
+    /**
+     * add weak skill
+     */
+    public void addWeakSkill(Skill skill) {
+<span class="nc bnc" id="L112" title="All 2 branches missed.">        if (!weakSkills.contains(skill)) {</span>
+<span class="nc" id="L113">            weakSkills.add(skill);</span>
+        }
+<span class="nc" id="L115">    }</span>
+
+    /**
+     * check if it's a perfect match
+     */
+    public boolean isPerfectMatch() {
+<span class="nc bnc" id="L121" title="All 4 branches missed.">        return score &gt;= 100.0 &amp;&amp; !hasGaps();</span>
+    }
+
+    /**
+     * get match level as string
+     */
+    public String getMatchLevel() {
+<span class="nc bnc" id="L128" title="All 2 branches missed.">        if (score &gt;= 90) return &quot;Excellent&quot;;</span>
+<span class="nc bnc" id="L129" title="All 2 branches missed.">        if (score &gt;= 75) return &quot;Good&quot;;</span>
+<span class="nc bnc" id="L130" title="All 2 branches missed.">        if (score &gt;= 60) return &quot;Fair&quot;;</span>
+<span class="nc bnc" id="L131" title="All 2 branches missed.">        if (score &gt;= 40) return &quot;Poor&quot;;</span>
+<span class="nc" id="L132">        return &quot;Very Poor&quot;;</span>
+    }
+
+    // ==================== output method ====================
+
+    @Override
+    public String toString() {
+<span class="nc" id="L139">        return &quot;GapReport{&quot; +</span>
+<span class="nc" id="L140">                &quot;score=&quot; + String.format(&quot;%.1f&quot;, score) + &quot;%&quot; +</span>
+<span class="nc" id="L141">                &quot;, matchLevel=&quot; + getMatchLevel() +</span>
+<span class="nc" id="L142">                &quot;, missingSkills=&quot; + missingSkills.size() +</span>
+<span class="nc" id="L143">                &quot;, weakSkills=&quot; + weakSkills.size() +</span>
+                '}';
+    }
+
+    /**
+     * detail report（for debug use）
+     */
+    public String toDetailedString() {
+<span class="nc" id="L151">        StringBuilder sb = new StringBuilder();</span>
+<span class="nc" id="L152">        sb.append(&quot;=== Gap Report ===\n&quot;);</span>
+<span class="nc" id="L153">        sb.append(&quot;Match Score: &quot;).append(String.format(&quot;%.1f%%&quot;, score))</span>
+<span class="nc" id="L154">                .append(&quot; (&quot;).append(getMatchLevel()).append(&quot;)\n\n&quot;);</span>
+
+<span class="nc bnc" id="L156" title="All 2 branches missed.">        if (!missingSkills.isEmpty()) {</span>
+<span class="nc" id="L157">            sb.append(&quot;Missing Skills (&quot;).append(missingSkills.size()).append(&quot;):\n&quot;);</span>
+<span class="nc bnc" id="L158" title="All 2 branches missed.">            for (Skill skill : missingSkills) {</span>
+<span class="nc" id="L159">                sb.append(&quot;  - &quot;).append(skill.getName())</span>
+<span class="nc" id="L160">                        .append(&quot; (&quot;).append(skill.getLevel()).append(&quot;)\n&quot;);</span>
+<span class="nc" id="L161">            }</span>
+<span class="nc" id="L162">            sb.append(&quot;\n&quot;);</span>
+        }
+
+<span class="nc bnc" id="L165" title="All 2 branches missed.">        if (!weakSkills.isEmpty()) {</span>
+<span class="nc" id="L166">            sb.append(&quot;Weak Skills (&quot;).append(weakSkills.size()).append(&quot;):\n&quot;);</span>
+<span class="nc bnc" id="L167" title="All 2 branches missed.">            for (Skill skill : weakSkills) {</span>
+<span class="nc" id="L168">                sb.append(&quot;  - &quot;).append(skill.getName())</span>
+<span class="nc" id="L169">                        .append(&quot; (need &quot;).append(skill.getLevel()).append(&quot;)\n&quot;);</span>
+<span class="nc" id="L170">            }</span>
+<span class="nc" id="L171">            sb.append(&quot;\n&quot;);</span>
+        }
+
+<span class="nc bnc" id="L174" title="All 2 branches missed.">        if (!hasGaps()) {</span>
+<span class="nc" id="L175">            sb.append(&quot;✓ Perfect match! No gaps found.\n&quot;);</span>
+        }
+
+<span class="nc" id="L178">        return sb.toString();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

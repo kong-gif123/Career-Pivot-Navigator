@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>LocalCatalogRepository.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">LifelongLearningApp</a> &gt; <a href="index.source.html" class="el_package">edu.llapp.infra</a> &gt; <span class="el_source">LocalCatalogRepository.java</span></div><h1>LocalCatalogRepository.java</h1><pre class="source lang-java linenums">package edu.llapp.infra;
+
+import edu.llapp.domain.Course;
+import java.util.*;
+
+public class LocalCatalogRepository {
+    private List&lt;Course&gt; courses;
+
+<span class="fc" id="L9">    public LocalCatalogRepository() {</span>
+<span class="fc" id="L10">        this.courses = initializeCourses();</span>
+<span class="fc" id="L11">    }</span>
+
+    public List&lt;Course&gt; listAll() {
+<span class="nc" id="L14">        return new ArrayList&lt;&gt;(courses);</span>
+    }
+
+    public List&lt;Course&gt; searchBySkill(String skillName) {
+<span class="fc" id="L18">        List&lt;Course&gt; results = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L19" title="All 2 branches covered.">        for (Course course : courses) {</span>
+<span class="fc" id="L20">            if (course.getSkills().stream()</span>
+<span class="fc bfc" id="L21" title="All 2 branches covered.">                    .anyMatch(s -&gt; s.equalsIgnoreCase(skillName))) {</span>
+<span class="fc" id="L22">                results.add(course);</span>
+            }
+<span class="fc" id="L24">        }</span>
+<span class="fc" id="L25">        return results;</span>
+    }
+
+    private List&lt;Course&gt; initializeCourses() {
+<span class="fc" id="L29">        List&lt;Course&gt; list = new ArrayList&lt;&gt;();</span>
+
+        // For Quick: Only create 10 courses.
+<span class="fc" id="L32">        list.add(new Course(&quot;C001&quot;, &quot;Python for Beginners&quot;, &quot;YouTube&quot;, &quot;http://youtube.com/python&quot;, 10, Set.of(&quot;Python&quot;)));</span>
+<span class="fc" id="L33">        list.add(new Course(&quot;C002&quot;, &quot;SQL Fundamentals&quot;, &quot;Coursera&quot;, &quot;http://coursera.org/sql&quot;, 8, Set.of(&quot;SQL&quot;)));</span>
+<span class="fc" id="L34">        list.add(new Course(&quot;C003&quot;, &quot;Java Basics&quot;, &quot;Udemy&quot;, &quot;http://udemy.com/java&quot;, 12, Set.of(&quot;Java&quot;)));</span>
+<span class="fc" id="L35">        list.add(new Course(&quot;C004&quot;, &quot;Excel Advanced&quot;, &quot;LinkedIn&quot;, &quot;http://linkedin.com/excel&quot;, 6, Set.of(&quot;Excel&quot;)));</span>
+<span class="fc" id="L36">        list.add(new Course(&quot;C005&quot;, &quot;Tableau for Data Viz&quot;, &quot;YouTube&quot;, &quot;http://youtube.com/tableau&quot;, 10, Set.of(&quot;Tableau&quot;)));</span>
+<span class="fc" id="L37">        list.add(new Course(&quot;C006&quot;, &quot;Docker Basics&quot;, &quot;YouTube&quot;, &quot;http://youtube.com/docker&quot;, 8, Set.of(&quot;Docker&quot;)));</span>
+<span class="fc" id="L38">        list.add(new Course(&quot;C007&quot;, &quot;AWS Fundamentals&quot;, &quot;AWS Training&quot;, &quot;http://aws.amazon.com&quot;, 15, Set.of(&quot;AWS&quot;)));</span>
+<span class="fc" id="L39">        list.add(new Course(&quot;C008&quot;, &quot;Git &amp; GitHub&quot;, &quot;GitHub Lab&quot;, &quot;http://lab.github.com&quot;, 5, Set.of(&quot;Git&quot;)));</span>
+<span class="fc" id="L40">        list.add(new Course(&quot;C009&quot;, &quot;Agile &amp; Scrum&quot;, &quot;Udemy&quot;, &quot;http://udemy.com/agile&quot;, 8, Set.of(&quot;Agile&quot;)));</span>
+<span class="fc" id="L41">        list.add(new Course(&quot;C010&quot;, &quot;UI/UX Design&quot;, &quot;Coursera&quot;, &quot;http://coursera.org/uiux&quot;, 10, Set.of(&quot;UI/UX&quot;)));</span>
+
+<span class="fc" id="L43">        return list;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

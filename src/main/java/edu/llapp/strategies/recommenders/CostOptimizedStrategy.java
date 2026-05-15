@@ -50,13 +50,13 @@ public class CostOptimizedStrategy implements ICourseStrategy {
         // First, promote the free ones.
         for (Course course : freeCourses) {
             if (result.size() >= 5) break;
-            result.addCourse(course, new Reason("FREE", "免費課程"));
+            result.addCourse(course, new Reason("FREE", "Free course"));
         }
 
         // If that's not enough, we'll push paid options.
         for (Course course : paidCourses) {
             if (result.size() >= 5) break;
-            result.addCourse(course, new Reason("VALUE", "高性價比"));
+            result.addCourse(course, new Reason("VALUE", "Good value for money"));
         }
 
         return result;

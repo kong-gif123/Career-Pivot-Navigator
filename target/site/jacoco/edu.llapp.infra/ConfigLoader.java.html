@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ConfigLoader.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">LifelongLearningApp</a> &gt; <a href="index.source.html" class="el_package">edu.llapp.infra</a> &gt; <span class="el_source">ConfigLoader.java</span></div><h1>ConfigLoader.java</h1><pre class="source lang-java linenums">package edu.llapp.infra;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Properties;
+
+/**
+ * Configuration loader
+ * Read settings from application.properties
+ */
+<span class="nc" id="L11">public class ConfigLoader {</span>
+    private static Properties properties;
+
+    static {
+<span class="fc" id="L15">        properties = new Properties();</span>
+<span class="fc" id="L16">        try (InputStream input = ConfigLoader.class.getClassLoader()</span>
+<span class="fc" id="L17">                .getResourceAsStream(&quot;application.properties&quot;)) {</span>
+<span class="pc bpc" id="L18" title="1 of 2 branches missed.">            if (input == null) {</span>
+<span class="nc" id="L19">                System.err.println(&quot;Unable to find application.properties&quot;);</span>
+            } else {
+<span class="fc" id="L21">                properties.load(input);</span>
+            }
+<span class="nc" id="L23">        } catch (IOException e) {</span>
+<span class="nc" id="L24">            e.printStackTrace();</span>
+<span class="fc" id="L25">        }</span>
+<span class="fc" id="L26">    }</span>
+
+    public static String getYouTubeApiKey() {
+<span class="fc" id="L29">        return properties.getProperty(&quot;youtube.api.key&quot;);</span>
+    }
+
+    public static String getYouTubeBaseUrl() {
+<span class="fc" id="L33">        return properties.getProperty(&quot;youtube.api.base.url&quot;,</span>
+                &quot;https://www.googleapis.com/youtube/v3&quot;);
+    }
+
+    public static int getApiTimeout() {
+<span class="fc" id="L38">        return Integer.parseInt(properties.getProperty(&quot;youtube.api.timeout.ms&quot;, &quot;3000&quot;));</span>
+    }
+
+    public static int getMaxRetries() {
+<span class="fc" id="L42">        return Integer.parseInt(properties.getProperty(&quot;youtube.api.max.retries&quot;, &quot;2&quot;));</span>
+    }
+
+    public static int getCacheTTL() {
+<span class="fc" id="L46">        return Integer.parseInt(properties.getProperty(&quot;cache.ttl.minutes&quot;, &quot;30&quot;));</span>
+    }
+
+    public static boolean isFallbackEnabled() {
+<span class="fc" id="L50">        return Boolean.parseBoolean(properties.getProperty(&quot;fallback.enabled&quot;, &quot;true&quot;));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>
