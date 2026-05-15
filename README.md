@@ -27,7 +27,7 @@
 
 ## Architecture
 
-![Architecture Diagram](./Architecture%20for%20Career%20Pivot%20Navigator%20System.drawio.png)
+![Architecture Diagram](./docs/architecture.png)
 
 Key design patterns used:
 - **Strategy Pattern** — Swappable matchers and recommenders
